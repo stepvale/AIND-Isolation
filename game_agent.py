@@ -35,7 +35,15 @@ def custom_score(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
+    # number of opponent moves
+    # Effect is that player plays aggressive to minimize its opponents moves only
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    return float(-len(game.get_legal_moves(game.get_opponent(player))))
 
 
 def custom_score_2(game, player):
@@ -61,7 +69,18 @@ def custom_score_2(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
+    #Number of own moves less opponent moves sqaured.
+    # Effect is that player values minimizing opponents moves early on
+    # then starts to focus on own moves more.
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves_sq = len(game.get_legal_moves(game.get_opponent(player)))^2
+    return float(own_moves - opp_moves_sq)
 
 
 def custom_score_3(game, player):
@@ -87,7 +106,17 @@ def custom_score_3(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
+    # own moves less blank spaces sqaured
+    # Effect is that ____
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    blank_spaces_sq= len(game.get_blank_spaces())^2
+    return float(own_moves - blank_spaces_sq)
 
 
 class IsolationPlayer:
@@ -211,10 +240,43 @@ class MinimaxPlayer(IsolationPlayer):
         """
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
-
         # TODO: finish this function!
-        raise NotImplementedError
+        #return game.get_legal_moves()[0]
+        best_score = float("-inf")
+        best_move = None
+        depth_remaining = depth
+        for m in game.get_legal_moves():
+            v = self.min_value(game.forecast_move(m), self.time_left, depth_remaining)
+            if v > best_score:
+                best_score = v
+                best_move = m
+        return best_move
 
+    def min_value(self, game, time_left, depth_remaining):
+        #TODO remove self from self.time_left?
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+        #terminal_test of depth limit
+        #TODO check terminal test
+        if depth_remaining <= 1:
+            return self.score(game,self)
+        v = float("inf")
+        for m in game.get_legal_moves():
+            v = min(v, self.max_value(game.forecast_move(m),self.time_left, depth_remaining-1))
+        return v
+
+    def max_value(self, game,time_left, depth_remaining):
+        #TODO remove self from self.time_left?
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+        #terminal_test of depth limit
+        #TODO check terminal test
+        if depth_remaining <= 1:
+            return self.score(game,self)
+        v = float("-inf")
+        for m in game.get_legal_moves():
+            v = max(v,self.min_value(game.forecast_move(m), self.time_left, depth_remaining-1))
+        return v
 
 class AlphaBetaPlayer(IsolationPlayer):
     """Game-playing agent that chooses a move using iterative deepening minimax
@@ -255,7 +317,30 @@ class AlphaBetaPlayer(IsolationPlayer):
         self.time_left = time_left
 
         # TODO: finish this function!
-        raise NotImplementedError
+        # Initialize the best move so that this function returns something
+        # in case the search fails due to timeout
+        best_move = (-1, -1)
+
+        #TODO Remove this line?
+        #best_move = game.get_legal_moves()[0]
+        for i in range(1,10000):
+            try:
+                # The try/except block will automatically catch the exception
+                # raised when the timer is about to expire.
+
+                    best_move = self.alphabeta(game, i)
+                    #return self.alphabeta(game, i)
+            except SearchTimeout:
+                #TODO Revert this line from "break" to "pass"?
+                #pass  # Handle any actions required after timeout as needed
+                break
+                #TODO move outside of except?
+                # Return the best move from the last completed search iteration
+        return best_move
+                #if best_move != None:
+                #    return best_move
+                #else:
+                #    return game.get_legal_moves()[0]
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf")):
         """Implement depth-limited minimax search with alpha-beta pruning as
@@ -306,4 +391,47 @@ class AlphaBetaPlayer(IsolationPlayer):
             raise SearchTimeout()
 
         # TODO: finish this function!
-        raise NotImplementedError
+        best_score = float("-inf")
+        best_move = None
+        for m in game.get_legal_moves():
+            v = self.max_value(game, depth, alpha, beta, self.time_left)
+            if v > best_score:
+                best_score = v
+                best_move = m
+            alpha = max(alpha,v)
+            #alpha = max(alpha,best score)
+            #beta = min(beta, v)
+        return best_move
+
+    def max_value (self, game, depth, alpha, beta, time_left):
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+        #terminal_test of depth limit
+        #TODO check terminal test
+        if depth <=0:
+            return self.score(game, self)
+        v = float("-inf")
+        for m in game.get_legal_moves():
+            #TODO add/remove self from self.time_left?
+            v = max(v, self.min_value(game.forecast_move(m), depth-1, alpha, beta, self.time_left))
+            if v >= beta:
+                return v
+            alpha = max(alpha, v)
+        return v
+
+    def min_value(self, game, depth, alpha, beta, time_left):
+        #TODO add/remove self from self.time_left?
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+        #terminal_test of depth limit
+        #TODO check terminal test
+        if depth <=0:
+            return self.score(game, self)
+        v = float("inf")
+        for m in game.get_legal_moves():
+            #TODO add/remove self from self.time_left?
+            v = min(v, self.max_value(game.forecast_move(m), depth-1, alpha, beta, self.time_left))
+            if v <= alpha:
+                return v
+            beta = min(beta, v)
+        return v
