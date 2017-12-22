@@ -332,7 +332,7 @@ class AlphaBetaPlayer(IsolationPlayer):
                     #return self.alphabeta(game, i)
             except SearchTimeout:
                 #TODO Revert this line from "break" to "pass"?
-                #pass  # Handle any actions required after timeout as needed
+                # Handle any actions required after timeout as needed
                 break
                 #TODO move outside of except?
                 # Return the best move from the last completed search iteration
@@ -387,8 +387,20 @@ class AlphaBetaPlayer(IsolationPlayer):
                 each helper function or else your agent will timeout during
                 testing.
         """
+        #time out test
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
+
+        #get legal moves for active player
+        legal_moves = game.get_legal_moves()
+        #Game over terminal test
+        if not legal_moves:
+            #-inf or inf from point of view of maximizing player
+            return game.utility(self), (-1,-1)
+
+        if depth == 0:
+            #heuristic score from point of view of maximizing player
+            return self.score(game,self), (-1,-1)
 
         # TODO: finish this function!
         best_score = float("-inf")
@@ -406,10 +418,19 @@ class AlphaBetaPlayer(IsolationPlayer):
     def max_value (self, game, depth, alpha, beta, time_left):
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
+
+        #get legal moves for active player
+        legal_moves = game.get_legal_moves()
+        #Game over terminal test
+        if not legal_moves:
+            #-inf or inf from point of view of maximizing player
+            return game.utility(self), (-1,-1)
+
         #terminal_test of depth limit
         #TODO check terminal test
-        if depth <=0:
+        if depth ==0:
             return self.score(game, self)
+
         v = float("-inf")
         for m in game.get_legal_moves():
             #TODO add/remove self from self.time_left?
@@ -421,12 +442,21 @@ class AlphaBetaPlayer(IsolationPlayer):
 
     def min_value(self, game, depth, alpha, beta, time_left):
         #TODO add/remove self from self.time_left?
+        #TODO check terminal tests
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
+
+        #get legal moves for active player
+        legal_moves = game.get_legal_moves()
+        #Game over terminal test
+        if not legal_moves:
+            #-inf or inf from point of view of maximizing player
+            return game.utility(self), (-1,-1)
+
         #terminal_test of depth limit
-        #TODO check terminal test
-        if depth <=0:
+        if depth ==0:
             return self.score(game, self)
+
         v = float("inf")
         for m in game.get_legal_moves():
             #TODO add/remove self from self.time_left?
